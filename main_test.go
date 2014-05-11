@@ -9,17 +9,14 @@ import (
 func TestHappy(t *testing.T) {
 
 	// Create a dir to put the test files in
-	tmpdir, err := ioutil.TempDir("", "globwatch-")
-	if err != nil {
-		t.Errorf("Failed to create tmpdir:", err)
-	}
+	tmpdir := createTestDir(t)
 	defer os.RemoveAll(tmpdir)
 
 	// Add an initial file
 	one := writeTestFile(tmpdir, "one.log", "File one")
 
 	// Watch the tmpdir for *.log files
-	evs := Watch(tmpdir + "/*.log", 0)
+	evs, _ := Watch(tmpdir+"/*.log", 0)
 	ev := <-evs
 
 	// Check the file event
@@ -55,8 +52,29 @@ func TestHappy(t *testing.T) {
 	}
 }
 
+func TestStop(t *testing.T) {
+	tmpdir := createTestDir(t)
+	defer os.RemoveAll(tmpdir)
+
+	evs, stop := Watch(tmpdir+"/*.log", 0)
+
+	stop <- true
+	_, stillOpen := <-evs
+	if stillOpen {
+		t.Errorf("Sending stop signal should close the events channel")
+	}
+}
+
+func createTestDir(t *testing.T) string {
+	tmpdir, err := ioutil.TempDir("", "globwatch-")
+	if err != nil {
+		t.Errorf("Failed to create tmpdir:", err)
+	}
+	return tmpdir
+}
+
 func writeTestFile(dir string, name string, content string) string {
-	path := dir+"/"+name
+	path := dir + "/" + name
 	ioutil.WriteFile(path, []byte(name), os.FileMode(0777))
 	return path
 }

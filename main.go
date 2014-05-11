@@ -37,28 +37,77 @@ type file struct {
 	curr os.FileInfo
 }
 
-// Watch a glob pattern in a go routine,
-// emitting changes as events on the returned channel
-func Watch(pattern string, sleepInMs int) <-chan Event {
+type fileMap map[string]*file
+
+func (m fileMap) add(fn string) {
+	fi, err := getFileInfo(fn)
+	if err != nil {
+		return
+	}
+	m[fn] = &file{fi, fi}
+}
+
+func (m fileMap) remove(fn string) {
+	delete(m, fn)
+}
+
+func (m fileMap) exists(fn string) bool {
+	_, exists := m[fn]
+	return exists
+}
+
+// Watch a glob pattern in a goroutine
+// Returns a channel of events and a control channel to stop the watching
+func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 	out := make(chan Event)
-	watchedFiles := make(map[string]*file)
+	stop := make(chan bool)
+	watches := make(fileMap)
 	sleepTime := time.Duration(sleepInMs) * time.Millisecond
 
+	// Fn wrapping the select over emitting/stopping
+	emit := func(typ EvType, fn string) bool {
+		select {
+		case out <- Event{typ, fn}:
+			return true
+		case <-stop:
+			return false
+		}
+	}
+
+	// Fn wrapping the selection over 'wait or stop'
+	wait := func(d time.Duration) bool {
+		select {
+		case <-time.After(d):
+			return true
+		case <-stop:
+			return false
+		}
+	}
+
+	// Let's go and watch that glob!
 	go func() {
+		defer close(out)
+
 		for {
 			currentFiles, err := filepath.Glob(pattern)
 			if err != nil {
-				time.Sleep(sleepTime)
-				continue
+				// Wait to retry or stop
+				if wait(sleepTime) {
+					continue
+				} else {
+					return
+				}
 			}
 
 			// Check the watched files for deletions and truncations
-			for filename, file := range watchedFiles {
+			for filename, file := range watches {
 				fi, err := getFileInfo(filename)
 				if err != nil {
 					// It's been deleted
-					delete(watchedFiles, filename)
-					out <- Event{DELETED, filename}
+					watches.remove(filename)
+					if !emit(DELETED, filename) {
+						return
+					}
 					continue
 				}
 
@@ -68,30 +117,33 @@ func Watch(pattern string, sleepInMs int) <-chan Event {
 
 				if file.prev != nil && file.curr.Size() < file.prev.Size() {
 					// It's been truncated
-					out <- Event{TRUNCATED, filename}
+					if !emit(TRUNCATED, filename) {
+						return
+					}
 				}
 			}
 
 			// Check for new files
 			for _, candidate := range currentFiles {
-				_, exists := watchedFiles[candidate]
-				if exists {
+				if watches.exists(candidate) {
 					continue
 				}
-				fi, err := getFileInfo(candidate)
-				if err != nil {
-					continue
+
+				watches.add(candidate)
+
+				if !emit(ADDED, candidate) {
+					return
 				}
-				watchedFiles[candidate] = &file{fi, fi}
-				out <- Event{ADDED, candidate}
 			}
 
 			// Sleep a bit to not hammer the disk quite so much
-			time.Sleep(sleepTime)
+			if !wait(sleepTime) {
+				return
+			}
 		}
 	}()
 
-	return out
+	return out, stop
 }
 
 // Get the os.FileInfo struct returned by (*os.File).Stat()

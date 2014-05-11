@@ -13,8 +13,9 @@ import (
 )
 
 func main() {
-    // func Watch(pattern string, sleepInMs int) <-chan Event
-    evs := globwatch.Watch("*.log", 100)
+    // Watch returns a channel of events and a control channel stop stop the watching
+    // func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool)
+    evs, _ := globwatch.Watch("*.log", 100)
 
     for ev := range evs {
         switch ev.Type() {
