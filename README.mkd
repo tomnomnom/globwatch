@@ -1,3 +1,29 @@
-# go globwatch
+# globwatch
 
-Watch a glob pattern for changes.
+Golang package to watch a glob pattern for changes.
+
+Example:
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/tomnomnom/globwatch"
+)
+
+func main() {
+    evs := globwatch.Watch("*.log")
+
+    for ev := range evs {
+        switch ev.Type() {
+        case globwatch.ADDED:
+        fmt.Printf("Added: %s\n", ev.Filename())
+        case globwatch.DELETED:
+        fmt.Printf("Deleted: %s\n", ev.Filename())
+        case globwatch.TRUNCATED:
+        fmt.Printf("Truncated: %s\n", ev.Filename())
+        }
+    }
+}
+```

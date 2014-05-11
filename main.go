@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// Time to sleep between re-globbing
 	glob_retry_sleep = 1000 * time.Millisecond
 )
 
@@ -18,24 +19,31 @@ const (
 	TRUNCATED
 )
 
+// Event type sent on the channel returned by Watch()
 type Event struct {
 	typ      EvType
 	filename string
 }
 
+// Get the type of an event
 func (e Event) Type() EvType {
 	return e.typ
 }
 
+// Get the filename the event relates to
 func (e Event) Filename() string {
 	return e.filename
 }
 
+// Used to track which files are being watched
+// and track changes in filesize.
 type file struct {
 	prev os.FileInfo
 	curr os.FileInfo
 }
 
+// Watch a glob pattern in a go routine,
+// emitting changes as events on the returned channel
 func Watch(pattern string) <-chan Event {
 	out := make(chan Event)
 	watchedFiles := make(map[string]*file)
@@ -90,6 +98,7 @@ func Watch(pattern string) <-chan Event {
 	return out
 }
 
+// Get the os.FileInfo struct returned by (*os.File).Stat()
 func getFileInfo(filename string) (os.FileInfo, error) {
 	fd, err := os.Open(filename)
 	if err != nil {
