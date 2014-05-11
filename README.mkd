@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-    evs := globwatch.Watch("*.log")
+    // func Watch(pattern string, sleepInMs int) <-chan Event
+    evs := globwatch.Watch("*.log", 100)
 
     for ev := range evs {
         switch ev.Type() {

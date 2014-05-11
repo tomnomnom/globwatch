@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-const (
-	// Time to sleep between re-globbing
-	glob_retry_sleep = 1000 * time.Millisecond
-)
-
 type EvType int
 
 const (
@@ -44,15 +39,16 @@ type file struct {
 
 // Watch a glob pattern in a go routine,
 // emitting changes as events on the returned channel
-func Watch(pattern string) <-chan Event {
+func Watch(pattern string, sleepInMs int) <-chan Event {
 	out := make(chan Event)
 	watchedFiles := make(map[string]*file)
+	sleepTime := time.Duration(sleepInMs) * time.Millisecond
 
 	go func() {
 		for {
 			currentFiles, err := filepath.Glob(pattern)
 			if err != nil {
-				time.Sleep(glob_retry_sleep)
+				time.Sleep(sleepTime)
 				continue
 			}
 
@@ -91,7 +87,7 @@ func Watch(pattern string) <-chan Event {
 			}
 
 			// Sleep a bit to not hammer the disk quite so much
-			time.Sleep(glob_retry_sleep)
+			time.Sleep(sleepTime)
 		}
 	}()
 
