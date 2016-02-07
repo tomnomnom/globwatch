@@ -19,11 +19,11 @@ func main() {
 
     for ev := range evs {
         switch ev.Type() {
-        case globwatch.ADDED:
+        case globwatch.Added:
         fmt.Printf("Added: %s\n", ev.Filename())
-        case globwatch.DELETED:
+        case globwatch.Deleted:
         fmt.Printf("Deleted: %s\n", ev.Filename())
-        case globwatch.TRUNCATED:
+        case globwatch.Truncated:
         fmt.Printf("Truncated: %s\n", ev.Filename())
         }
     }

@@ -6,12 +6,16 @@ import (
 	"time"
 )
 
+// EvType represents the type of event, e.g. Added, Deleted
 type EvType int
 
 const (
-	ADDED EvType = iota
-	DELETED
-	TRUNCATED
+	// Added signifies a file was added
+	Added EvType = iota
+	// Deleted signifies a file was deleted
+	Deleted
+	// Truncated signifies a file was truncated
+	Truncated
 )
 
 // Event type sent on the channel returned by Watch()
@@ -20,12 +24,12 @@ type Event struct {
 	filename string
 }
 
-// Get the type of an event
+// Type return the type of an event
 func (e Event) Type() EvType {
 	return e.typ
 }
 
-// Get the filename the event relates to
+// Filename returns the filename an event related to
 func (e Event) Filename() string {
 	return e.filename
 }
@@ -111,7 +115,7 @@ func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 				if err != nil {
 					// It's been deleted
 					watches.remove(filename)
-					if !emit(DELETED, filename) {
+					if !emit(Deleted, filename) {
 						return
 					}
 					continue
@@ -123,7 +127,7 @@ func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 
 				if file.prev != nil && file.curr.Size() < file.prev.Size() {
 					// It's been truncated
-					if !emit(TRUNCATED, filename) {
+					if !emit(Truncated, filename) {
 						return
 					}
 				}
@@ -137,7 +141,7 @@ func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 
 				watches.add(candidate)
 
-				if !emit(ADDED, candidate) {
+				if !emit(Added, candidate) {
 					return
 				}
 			}

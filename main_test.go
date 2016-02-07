@@ -20,7 +20,7 @@ func TestHappy(t *testing.T) {
 	ev := <-evs
 
 	// Check the file event
-	if ev.Type() != ADDED {
+	if ev.Type() != Added {
 		t.Errorf("Should have received ADDED event")
 	}
 	if ev.Filename() != one {
@@ -30,7 +30,7 @@ func TestHappy(t *testing.T) {
 	// Add a second file
 	two := writeTestFile(tmpdir, "two.log", "File two")
 	ev = <-evs
-	if ev.Type() != ADDED {
+	if ev.Type() != Added {
 		t.Errorf("Should have received ADDED event")
 	}
 	if ev.Filename() != two {
@@ -40,14 +40,14 @@ func TestHappy(t *testing.T) {
 	// Truncate the second file
 	os.Truncate(two, 0)
 	ev = <-evs
-	if ev.Type() != TRUNCATED {
+	if ev.Type() != Truncated {
 		t.Errorf("Should have received TRUNCATED event")
 	}
 
 	// Remove the first file
 	os.Remove(one)
 	ev = <-evs
-	if ev.Type() != DELETED {
+	if ev.Type() != Deleted {
 		t.Errorf("Should have received DELETED event")
 	}
 }
@@ -68,7 +68,7 @@ func TestStop(t *testing.T) {
 func createTestDir(t *testing.T) string {
 	tmpdir, err := ioutil.TempDir("", "globwatch-")
 	if err != nil {
-		t.Errorf("Failed to create tmpdir:", err)
+		t.Errorf("Failed to create tmpdir: %s", err)
 	}
 	return tmpdir
 }
