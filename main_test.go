@@ -16,7 +16,7 @@ func TestHappy(t *testing.T) {
 	one := writeTestFile(tmpdir, "one.log", "File one")
 
 	// Watch the tmpdir for *.log files
-	evs, _ := Watch(tmpdir+"/*.log", 0)
+	evs, _ := Watch(tmpdir+"/*.log", 1)
 	ev := <-evs
 
 	// Check the file event
@@ -38,14 +38,20 @@ func TestHappy(t *testing.T) {
 	}
 
 	// Truncate the second file
-	os.Truncate(two, 0)
+	err := os.Truncate(two, 0)
+	if err != nil {
+		t.Errorf("Failed to truncate second file")
+	}
 	ev = <-evs
 	if ev.Type() != Truncated {
 		t.Errorf("Should have received TRUNCATED event")
 	}
 
 	// Remove the first file
-	os.Remove(one)
+	err = os.Remove(one)
+	if err != nil {
+		t.Errorf("Failed to remove first file")
+	}
 	ev = <-evs
 	if ev.Type() != Deleted {
 		t.Errorf("Should have received DELETED event")
@@ -75,6 +81,6 @@ func createTestDir(t *testing.T) string {
 
 func writeTestFile(dir string, name string, content string) string {
 	path := dir + "/" + name
-	ioutil.WriteFile(path, []byte(name), os.FileMode(0777))
+	_ = ioutil.WriteFile(path, []byte(name), os.FileMode(0777))
 	return path
 }

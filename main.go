@@ -76,9 +76,6 @@ func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 		case <-stop:
 			return false
 		}
-		// Go 1.0 doesn't like the lack of return here, despite
-		// the fact that it shouldn't be reached
-		return false
 	}
 
 	// Fn wrapping the selection over 'wait or stop'
@@ -89,9 +86,6 @@ func Watch(pattern string, sleepInMs int) (<-chan Event, chan<- bool) {
 		case <-stop:
 			return false
 		}
-		// Go 1.0 doesn't like the lack of return here, despite
-		// the fact that it shouldn't be reached
-		return false
 	}
 
 	// Let's go and watch that glob!
