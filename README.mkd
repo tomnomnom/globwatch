@@ -30,4 +30,4 @@ func main() {
 }
 ```
 
-[![Build Status](https://travis-ci.org/TomNomNom/globwatch.svg?branch=master)](https://travis-ci.org/TomNomNom/globwatch)
+[![Build Status](https://travis-ci.org/tomnomnom/globwatch.svg?branch=master)](https://travis-ci.org/tomnomnom/globwatch)
